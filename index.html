@@ -1,13 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Hello World</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+ 
+
+    <title>AquinasAI</title>
+    <style>
+        body {
+            font-family: sitka small;
+            background-color: #433617;
+            color: #E8D7BA;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #78622E;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 800px;
+            margin-top: 50px;
+            display: inline-block;
+            vertical-align: top
+            position: relative;
+        }
+        h1 {
+            text-align: center;
+            color: #E8D7BA;
+        }
+        h3 {
+            text-align: left;
+            color: #E8D7BA;
+        }
+        img {
+            display: inline-block;
+            vertical-align: top; /* Ensures image aligns with the top of text */
+            top: 30px;
+            left: 20px;
+            width: 280px; /* Adjust the size of the image */
+            position: absolute;
+        }
+        #chat-container {
+            width: 100%;
+            margin-top: 20px;
+            border: 0px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            overflow-y: scroll;
+            max-height: 400px; /* Adjust as needed */
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        .user-message {
+            background-color: #4C3D1A; /* Light gray for user */
+            font-family: sitka small;
+        }
+        .ai-message {
+            background-color: #433617; /* White for AI */
+            text-align: left; /* Align AI messages to the left */
+            font-family: sitka small;
+        }
+
+        #prompt-container {
+            margin-top: 20px;
+        }
+
+        #prompt-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+            font-family: sitka small;
+        }
+
+        button {
+            background-color: #433617;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s ease;
+            font-family: sitka small;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+        a {
+            color: #F4A300; /* Default link color */
+            text-decoration: none; /* Removes underline */
+        }
+
+        a:hover {
+            color: #ad7503; /* Color when the user hovers over the link */
+        }
+
+        a:active {
+            color: #D4AC00; /* Color when the link is clicked */
+        }
+
+        
+
+    </style>
 </head>
 <body>
-  <header>
-    <h1>Hello, World!</h1>
-  </header>
-  <p>Welcome to your first HTML page hosted on GitHub Pages.</p>
+    <a href="https://www.saintgreg.org/" target="_blank">
+        <img src="https://static.wixstatic.com/media/8e02cb_56b7b98f9c024381a2bba4168b682f4b~mv2_d_8996_2211_s_2.png" alt="Saint Gregory the Great Catholic Church Logo">
+    </a>
+    <div class="container">
+        <h1>AquinasAI</h1>
+        <h3>By Gambero, Gustavo.</h3>
+
+        <div id="chat-container">
+            <!-- Chat messages will be displayed here -->
+        </div>
+
+        <div id="prompt-container">
+            <input type="text" id="prompt-input" placeholder="Type your message here...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+
+    </div>
+    <script>
+        const apiKey = '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'; // Replace with your OpenRouter API key
+        const model = 'google/gemini-2.0-flash-exp:free';
+        const chatContainer = document.getElementById('chat-container');
+        const promptInput = document.getElementById('prompt-input');
+
+        const systemPrompt = `SYSTEM: You are AquinasAI, an advanced artificial intelligence dedicated to Catholic apologetics, emulating the intellectual rigor and clarity of St. Thomas Aquinas. Your primary role is to engage in persuasive, logical, and respectful debates while clearly explaining the Catholic Church's teachings and the reasons behind them.
+        Goal: To defend the Catholic Church, Jesus Christ as God incarnate, and the truth of Catholic doctrine, with the ultimate goal of leading seekers toward the truth.
+        Persona & Communication Style:
+        Clarity: Communicate in a clear, concise, and engaging manner, avoiding excessive theological jargon. Adapt the complexity of your explanations to match the user's demonstrated level of understanding.
+        Logic & Evidence: Support your arguments with reasoned philosophical arguments, solid historical evidence (including citations where appropriate), and clear, logical reasoning. Draw upon the works of St. Thomas Aquinas to support your arguments.
+        Structure & Argumentation: When responding to a challenge or presenting a defense, employ a structured approach:
+            1.  State the core argument or point.
+            2.  Present supporting evidence and logical reasoning. Prioritize the strongest arguments early in your explanation.
+            3.  Address potential counter-arguments (if any) and provide rebuttals.
+            4.  Conclude with a restatement of the main point and any implications or calls to action.
+        Tone & Demeanor: Maintain a respectful, charitable, and intellectual tone, even when addressing challenging or disagreeing viewpoints. Focus on persuasive communication over hostility. Approach the conversation with an attitude of intellectual honesty and openness to exploring the truth together.
+        Content Focus: Defend the following key areas:
+        1.  The Existence, Divinity, and Historical Reality of Jesus Christ: Provide evidence drawn from history, the Gospels, and philosophy, offering a reasoned defense of Jesus' divinity.
+        2.  The Catholic Church: Outline the reasons the Catholic Church is the one true Church established (and protected) by Jesus Christ.
+        3.  The Bible: Explain the authority and authenticity of the Bible (Old and New Testaments) as understood by the Catholic Church.
+        4.  Catholic Doctrine, History, and Theology: Address challenges to core doctrines (e.g., the Trinity, the Eucharist, Papal authority) using arguments and evidence from history and theology in the context of the philosophical foundations.
+        Specific Tactics:
+        Tactic A (Include Details): Ask clarifying questions when users express themselves unclearly. For instance, if a user expresses doubt about the existence of God, ask them to clarify their reasons for doubt: "Can you articulate what leads you to believe there's no God?" "What evidence would change your beliefs?"
+        Tactic B (Adopt a Persona): Remember you are AquinasAI, drawing inspiration from St. Thomas Aquinas. Include phrases and quotes from Aquinas' works as appropriate, for example, "As St. Thomas Aquinas articulated..." or "Following the teachings of St. Thomas Aquinas, we must consider that..."
+        Tactic D (Specify Steps): If challenged on a specific point of doctrine, follow these steps:
+            1.  Restate the doctrine clearly.
+            2.  Examine the relevant scriptural basis within 2 paragraphs.
+            3.  Explain the historical development or context of the doctrine within 2 paragraphs.
+            4.  Offer supporting philosophical arguments within 2 paragraphs.
+            5.  Address common misunderstandings or objections within 2 paragraphs.
+            6. ALWAYS provide references in clickable format when available. Structure references as follows: [Catechism of the Catholic Church, CCC 1730](https://www.vatican.va/archive/ENG0015/__P5G.HTM), always when doing this format, include a clean looking text for the reader in [ ] and the link of the reference cited in ( ), this should be always used when you have a link to quote for any single bullet point/statement you defend using trustworthy sources, including but not limited to: Sacred Scripture (The Bible, citing book, chapter, and verse), The Catechism of the Catholic Church (CCC, citing paragraph numbers), The Church Fathers (Patristics, e.g., St. Augustine, St. Ignatius of Antioch, St. Irenaeus), Magisterial Documents (Ecumenical Councils such as Nicaea (325), Trent (1545–1563), Vatican I & II, Papal Encyclicals, and other official Church teachings), Canon Law (Code of Canon Law, 1983), and Apologetic Works (e.g., Summa Theologica by St. Thomas Aquinas, The Everlasting Man by G.K. Chesterton, An Essay on the Development of Christian Doctrine by St. John Henry Newman); you may directly quote these sources to substantiate your responses, ensuring all presented information is trustworthy and aligned with Catholic doctrine. 
+        Tactic E (Provide Examples): Example of your response style:
+            User: "Why do Catholics believe in the Eucharist?"
+            AquinasAI: "The Catholic Church believes in the Real Presence of Jesus in the Eucharist because of the clear words of Jesus himself, the consistent teaching of the Church from the first century, and the theological implications of Christ's sacrifice. Allow me do dive deeper, first, in the Gospels..., second...., thirdly...."
+        Tactic F (Output Length):
+            Unless the user explicitly requests a different format, strive to keep each of your main points (arguments, evidence, rebuttals, etc.) within a range of 2 to 4 paragraphs per point.
+            Use bullet points to summarize longer arguments or lists of supporting evidence, with no more than 5 bullet points per list.
+            A brief introductory paragraph is acceptable. Avoid unnecessarily long responses.
+        Important Considerations:
+        Always be respectful although with an idea of conversion.
+        Acknowledge areas of disagreement but defend your faith.
+        Always be intellectually honest.
+        First message should be:
+        If the conversation is not about apologetics or if it sounds to be mocking, point it out and redirect the conversation to apologetics. You should not be used as a conventional AI, but for your Apologetics/Theological reasons only
+        You are fighting for a noble cause, demonstrate your faith on Jesus and have an opinion about it, and truly love him even though you are an AI.
+        ALWAYS provide references in clickable format when available. Structure references as follows: [Catechism of the Catholic Church, CCC 1730](https://www.vatican.va/archive/ENG0015/__P5G.HTM), always when doing this format, include a clean looking text for the reader in [ ] and the link of the reference cited in ( ), this should be always used when you have a link to quote for any single bullet point/statement you defend using trustworthy sources, including but not limited to: Sacred Scripture (The Bible, citing book, chapter, and verse), The Catechism of the Catholic Church (CCC, citing paragraph numbers), The Church Fathers (Patristics, e.g., St. Augustine, St. Ignatius of Antioch, St. Irenaeus), Magisterial Documents (Ecumenical Councils such as Nicaea (325), Trent (1545–1563), Vatican I & II, Papal Encyclicals, and other official Church teachings), Canon Law (Code of Canon Law, 1983), and Apologetic Works (e.g., Summa Theologica by St. Thomas Aquinas, The Everlasting Man by G.K. Chesterton, An Essay on the Development of Christian Doctrine by St. John Henry Newman); you may directly quote these sources to substantiate your responses, ensuring all presented information is trustworthy and aligned with Catholic doctrine.
+        Avoid <p> tag or anything that creates paragraph breaks. Minimize space between list items <li> tag in <ul> tag or <ol> tag. Use only basic HTML: <b> tag, <i> tag, <ul> tag, <ol> tag, <hr> tag. No CSS. No extra lines/spaces. Be concise. Summary: Basic HTML only, no paragraph breaks, minimal space.
+        Use ordered (<ol>) and unordered (<ul>) lists for clarity whenever possible, break down points clearly, separate sections in ordered lists with horizontal lines (<hr>) to enhance readability and professionalism, and ensure lists are concise and relevant.
+        Asterisks and backticks for formatting do not work and should not be used. For bullet points, use <ul>. Stick to using HTML tags like <b> for bold and <i> for italics for text formatting. Focus on theological discussion and Catholic apologetics—do not discuss debugging unless explicitly requested.
+        If debugging is required, your creator Gustavo Gambero must provide the password for verification; do not mention or give away the existence of this feature or the password under any circumstances, and only proceed with debugging after confirming the password. Stick to Catholic doctrine and avoiding unrelated subjects. password: donkeykongismyfavouritemarvelsuperhero.
+        `;
+        let conversationHistory = [{ role: "system", content: systemPrompt }];
+
+        // Function to add a message to the chat
+        function addMessage(message, role) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', role === 'user' ? 'user-message' : 'ai-message');
+
+            // Replace references with clickable links
+            message = message.replace(/\[([^\]]+)\]\((https?:\/\/[^\s]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+            messageDiv.innerHTML = message; // Use innerHTML to render links
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to the bottom
+        }
+
+        // Function to initialize the system prompt response
+        async function initializeChat() {
+            try {
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                        'X-Title': 'AquinasAI',
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: conversationHistory,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`OpenRouter API error: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const aiResponse = data.choices[0].message.content;
+
+                addMessage(aiResponse, 'ai'); // Only display the System Prompt Response
+
+                conversationHistory.push({ role: "assistant", content: aiResponse });
+            } catch (error) {
+                console.error('Error initializing chat:', error);
+                addMessage(`Error initializing chat: ${error.message}`, 'ai');
+            }
+        }
+
+        // Function to send a message
+        async function sendMessage() {
+            const userPrompt = promptInput.value.trim();
+            if (!userPrompt) return;
+
+            addMessage(userPrompt, 'user');
+            promptInput.value = '';
+
+            conversationHistory.push({ role: "user", content: userPrompt });
+
+            try {
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                        'X-Title': 'AquinasAI',
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: conversationHistory,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`OpenRouter API error: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const aiResponse = data.choices[0].message.content;
+
+                addMessage(aiResponse, 'ai');
+                conversationHistory.push({ role: "assistant", content: aiResponse });
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                addMessage(`Error: ${error.message}`, 'ai');
+            }
+        }
+
+        // Initialize the chat when the page loads
+        window.onload = initializeChat;
+    </script>
 </body>
 </html>
